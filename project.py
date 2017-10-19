@@ -37,6 +37,18 @@ def login_required(f):
     return decorated_function
 
 
+def owner_required(f):
+    @wraps(f)
+    def decorated_function(restaurant_id, **kwargs):
+        restaurant = session.query(Restaurant).filter_by(
+            id=restaurant_id).one()
+        if restaurant.user_id != login_session['user_id']:
+            flash("can't modify content not belongs to you")
+            return redirect(url_for('showRestaurants'))
+        return f(restaurant_id, **kwargs)
+    return decorated_function
+
+
 @app.route('/login')
 def showLogin():
     state = ''.join(random.choice(string.ascii_uppercase + string.digits)
@@ -134,7 +146,6 @@ def gconnect():
     output += (' " style = "width: 300px; height: 300px;border-radius: 150px;'
                '-webkit-border-radius: 150px;-moz-border-radius: 150px;"> ')
     flash("you are now logged in as %s" % login_session['username'])
-    print "done!"
     return output
 
 
@@ -241,9 +252,13 @@ def newRestaurant():
 # Edit a restaurant
 @app.route('/restaurant/<int:restaurant_id>/edit/', methods=['GET', 'POST'])
 @login_required
+@owner_required
 def editRestaurant(restaurant_id):
     editedRestaurant = session.query(Restaurant).filter_by(
         id=restaurant_id).one()
+    if editedRestaurant.user_id != login_session['user_id']:
+        flash("can't modify content not belongs to you")
+        return redirect(url_for('showRestaurants'))
     if request.method == 'POST':
         if request.form['name']:
             editedRestaurant.name = request.form['name']
@@ -258,6 +273,7 @@ def editRestaurant(restaurant_id):
 # Delete a restaurant
 @app.route('/restaurant/<int:restaurant_id>/delete/', methods=['GET', 'POST'])
 @login_required
+@owner_required
 def deleteRestaurant(restaurant_id):
     restaurantToDelete = session.query(Restaurant).filter_by(
         id=restaurant_id).one()
@@ -294,6 +310,7 @@ def showMenu(restaurant_id):
 @app.route('/restaurant/<int:restaurant_id>/menu/new/',
            methods=['GET', 'POST'])
 @login_required
+@owner_required
 def newMenuItem(restaurant_id):
     restaurant = session.query(Restaurant).filter_by(id=restaurant_id).one()
     if request.method == 'POST':
@@ -315,9 +332,9 @@ def newMenuItem(restaurant_id):
 @app.route('/restaurant/<int:restaurant_id>/menu/<int:menu_id>/edit',
            methods=['GET', 'POST'])
 @login_required
+@owner_required
 def editMenuItem(restaurant_id, menu_id):
     editedItem = session.query(MenuItem).filter_by(id=menu_id).one()
-    restaurant = session.query(Restaurant).filter_by(id=restaurant_id).one()
     if request.method == 'POST':
         if request.form['name']:
             editedItem.name = request.form['name']
@@ -341,8 +358,8 @@ def editMenuItem(restaurant_id, menu_id):
 @app.route('/restaurant/<int:restaurant_id>/menu/<int:menu_id>/delete',
            methods=['GET', 'POST'])
 @login_required
+@owner_required
 def deleteMenuItem(restaurant_id, menu_id):
-    restaurant = session.query(Restaurant).filter_by(id=restaurant_id).one()
     itemToDelete = session.query(MenuItem).filter_by(id=menu_id).one()
     if request.method == 'POST':
         session.delete(itemToDelete)
