@@ -1,4 +1,4 @@
-from flask import Flask, render_template, g, request,\
+from flask import Flask, render_template, request,\
     redirect, jsonify, url_for, flash
 from functools import wraps
 from sqlalchemy import create_engine, asc
@@ -256,9 +256,6 @@ def newRestaurant():
 def editRestaurant(restaurant_id):
     editedRestaurant = session.query(Restaurant).filter_by(
         id=restaurant_id).one()
-    if editedRestaurant.user_id != login_session['user_id']:
-        flash("can't modify content not belongs to you")
-        return redirect(url_for('showRestaurants'))
     if request.method == 'POST':
         if request.form['name']:
             editedRestaurant.name = request.form['name']
