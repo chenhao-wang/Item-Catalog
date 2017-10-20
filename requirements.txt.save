@@ -1,0 +1,11 @@
+flask
+
+wraps
+sqlalchemy
+random
+string
+oauth2client.client
+httplib2
+json
+requests
+
